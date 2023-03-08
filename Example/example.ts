@@ -3,7 +3,7 @@ import makeWASocket, { AnyMessageContent, delay, DisconnectReason, fetchLatestBa
 import MAIN_LOGGER from '../src/Utils/logger'
 
 const logger = MAIN_LOGGER.child({ })
-logger.level = 'trace'
+logger.level = 'error'
 
 const useStore = !process.argv.includes('--no-store')
 const doReplies = !process.argv.includes('--no-reply')
@@ -67,7 +67,15 @@ const startSock = async() => {
 
 		await sock.sendPresenceUpdate('paused', jid)
 
-		await sock.sendMessage(jid, msg)
+		const msgr = await sock.sendMessage(jid, msg)
+		if(msgr?.messageTimestamp && msgr?.key.id && msgr?.key.remoteJid){
+			await sock.chatModify(
+				{ clear: { messages: [{ id: ""+msgr?.key.id, fromMe: true, timestamp: msgr?.messageTimestamp as number}] } }, 
+				msgr?.key.remoteJid
+			)
+			console.log("DELETE:CHAT:"+msgr?.key.remoteJid)
+			console.log("DELETE:CHAT:"+JSON.stringify({ clear: { messages: [{ id: ""+msgr?.key.id, fromMe: true, timestamp: msgr?.messageTimestamp }] } }))
+		}
 	}
 
 	// the process function lets you process all events that just occurred
@@ -89,7 +97,7 @@ const startSock = async() => {
 					}
 				}
 
-				console.log('connection update', update)
+				// console.log('connection update', update)
 			}
 
 			// credentials updated -- save them
@@ -98,13 +106,13 @@ const startSock = async() => {
 			}
 
 			if(events.call) {
-				console.log('recv call event', events.call)
+				// console.log('recv call event', events.call)
 			}
 
 			// history received
 			if(events['messaging-history.set']) {
-				const { chats, contacts, messages, isLatest } = events['messaging-history.set']
-				console.log(`recv ${chats.length} chats, ${contacts.length} contacts, ${messages.length} msgs (is latest: ${isLatest})`)
+				// const { chats, contacts, messages, isLatest } = events['messaging-history.set']
+				// console.log(`recv ${chats.length} chats, ${contacts.length} contacts, ${messages.length} msgs (is latest: ${isLatest})`)
 			}
 
 			// received a new message
@@ -125,23 +133,23 @@ const startSock = async() => {
 
 			// messages updated like status delivered, message deleted etc.
 			if(events['messages.update']) {
-				console.log(events['messages.update'])
+				// console.log(events['messages.update'])
 			}
 
 			if(events['message-receipt.update']) {
-				console.log(events['message-receipt.update'])
+				// console.log(events['message-receipt.update'])
 			}
 
 			if(events['messages.reaction']) {
-				console.log(events['messages.reaction'])
+				// console.log(events['messages.reaction'])
 			}
 
 			if(events['presence.update']) {
-				console.log(events['presence.update'])
+				// console.log(events['presence.update'])
 			}
 
 			if(events['chats.update']) {
-				console.log(events['chats.update'])
+				// console.log(events['chats.update'])
 			}
 
 			if(events['contacts.update']) {
